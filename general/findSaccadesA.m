@@ -166,7 +166,7 @@ if nargin >= 5 && show_fig
     plot([-15 15], [0 0], 'k--');
     axis([-12 12 -12 12]);
 
-    tax = [0:t_int:length(Xin)*t_int-t_int]';
+    tax = (0:t_int:length(Xin)*t_int-t_int)';
 
     % bottom plot is vs. time
     botp = subplot(2,1,2);
