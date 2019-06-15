@@ -1,10 +1,10 @@
-function bFile(file_in, file_type, spm, file_out, spike_list, ...
-    sig_list, keep_matCmds, keep_dio, flags, messageH, rawFlag)
+function analog_data = bFile_keepAnalog(file_in, file_type, spm, file_out, spike_list, ...
+    sig_list, keep_matCmds, keep_dio, flags, messageH)
 %function bFile(file_in, file_type, spm, file_out, spike_list, ...
 %    sig_list, keep_matCmds, keep_dio, flags, messageH)
 %
 % Convenience function for building FIRA from a data file
-
+% modified from bFile. keep raw analog data in mat. 
 if nargin < 10
     error('bFile requires 10 arguments')
 end
@@ -14,26 +14,26 @@ include_list = {'trial', 'ecodes'};
 
 % keep_spikes is list of spike channels/units or keyword 'all' (default)
 if ~isempty(spike_list)
-    include_list = [include_list, 'spikes', {{'keep_spikes', spike_list}}];
+    include_list = {include_list{:}, 'spikes', {'keep_spikes', spike_list}};
 end
 
 % keep sigs is list of channels or keyword 'all' (default)
 if ~isempty(sig_list)
     if iscell(sig_list)
-        include_list = [include_list, 'analog', ...
-            {{'keep_sigs', sig_list{1}, 'names', sig_list{2}}}];
+        include_list = {include_list{:}, 'analog', ...
+            {'keep_sigs', sig_list{1}, 'names', sig_list{2}}};
     else
-        include_list = [include_list, 'analog', {{'keep_sigs', sig_list}}];
+        include_list = {include_list{:}, 'analog', {'keep_sigs', sig_list}};
     end
 end
 
 % keep_matCmds is just a flag (default false)
 if keep_matCmds
-    include_list = [include_list, 'matCmds'];
+    include_list = {include_list{:}, 'matCmds'};
 end
 
 if keep_dio
-    include_list = [include_list, 'dio'];
+    include_list = {include_list{:}, 'dio'};
 end
 
 % INIT FIRA
@@ -49,17 +49,17 @@ elseif iscell(file_in)
     end
 end
 
-if nargin < 11 || ~rawFlag
+% ALLOC MEM IN FIRA
+buildFIRA_alloc;
 
-    % ALLOC MEM IN FIRA
-    buildFIRA_alloc;
-    
-    % parse data
-    buildFIRA_parse;
-    
-    % cleanup
-    buildFIRA_cleanup(true);
-end
+% parse data
+buildFIRA_parse;
+
+global FIRA
+analog_data  = FIRA.raw.analog.data;
+
+% cleanup 
+buildFIRA_cleanup(true);
 
 % save, if necessary
 if ~isempty(file_out)

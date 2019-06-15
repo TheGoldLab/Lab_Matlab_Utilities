@@ -59,73 +59,50 @@ end
 % Analog data
 if isfield(FIRA, 'analog')
     
-    % get data from Plexon
-    [na, ta, da] = PL_GetAD(FIRA.header.filename);
-    
+% modified LD 2009-05-13
+%     % get data from Plexon
+%     [na, ta, da] = PL_GetAD(FIRA.header.filename);
+    [na, ta, da] = PL_GetADV(FIRA.header.filename);
+    temp_gains = PL_GetADGains(FIRA.header.filename);
+    plx_params = PL_GetPars(FIRA.header.filename); 
+    ind_gains = plx_params([1:plx_params(7)]+269);
+    plx_gains = temp_gains(ind_gains);
     % parse the data
-    if na && ~isempty(ta) && ~isempty(da)
-                
-        % make sure the raw data are listed in the appropriate order
-        % expected by FIRA.analog
-        if isempty(FIRA.analog.name) || isempty(FIRA.analog.store_rate)
+    if na && ~isempty(ta) && ~isempty(da) 
+        
+        % make sure the raw data structs are set up
+        if isempty(FIRA.analog.name)
+            
+            % useful variables
+            num_channels = size(da, 2);
+            pl_params    = PL_GetPars(FIRA.header.filename);
 
-            % get user-defined channel parameters
-            ks = buildFIRA_get('analog', 'keep_sigs');   % 'all' or [<list>]          
-            so = buildFIRA_get('analog', 'channel_order'); % [<list>] or []
-            
-            % get sort order, which by default includes
-            % the highest-numbered channels (i.e., eye position)
-            num_channels = size(da, 2);            
-            if length(so) > num_channels
-                so = so(end-num_channels+1:end);
-            elseif length(so) < num_channels
-                so = 17-num_channels:16; % trust me
-            end
-            
-            % convert keep sigs to indices of sort order
-            if isnumeric(ks)
-                [tmp, ks] = ismember(ks, so);
-            else
-                ks = 1:length(so);
-            end
-
-            % save the result
-            FIRA.raw.analog.params.ks = ks;
-            
-            % set up FIRA.analog
-            if isempty(FIRA.analog.acquire_rate)
-                
-                % connection params gives the store rate
-                pl_params                = PL_GetPars(FIRA.header.filename);
-                FIRA.analog.acquire_rate = ones(1,length(ks))*pl_params(8);
-                FIRA.analog.store_rate   = FIRA.analog.acquire_rate;
-            end
-
-            if isempty(FIRA.analog.name)
-                
-                % set to the default channel names
-                FIRA.analog.name = getPLX_analogNames(so(ks));
-            end
-            
-            % possibly override store rates
-            resample = get(FIRA.spm.analog, 'resample');
-            if ~isempty(resample)
-                for rr = 1:size(resample, 1)
-                    Lr = strcmp(resample{rr,1}, FIRA.analog.name);
-                    if sum(Lr) == 1 && isfinite(resample{rr,2})
-                        FIRA.analog.store_rate(Lr) = resample{rr,2};
-                    end
-                end
+            if ~verify(FIRA.spm.analog, 1:num_channels, pl_params(8))
+                return
             end
         end
         
         % NOTE -- for now we're assuming all channels have the same acquire rate
         sf = 1/FIRA.analog.acquire_rate(1);
 
+% modified LD 2009-05-13 currently the gain setup is not quite right
         % get the data
+%         FIRA.raw.analog.data = ...
+%             [FIRA.raw.analog.data; [1000*[ta:sf:(ta+sf*(na-1))]' ...
+%             [FIRA.raw.analog.data; [1000*[ta:sf:(ta+sf*(na-1))]' ...
+%             da(:, FIRA.raw.analog.params.kept_sigs).*...
+%             repmat(FIRA.analog.gain,size(da,1),1)+repmat(FIRA.analog.offset,size(da,1),1)]];
+%         FIRA.raw.analog.data = ...
+%             [FIRA.raw.analog.data; [1000*[ta:sf:(ta+sf*(na-1))]' ...
+%             da(:, FIRA.raw.analog.params.ks)./40]];
+        gains = 1000.*FIRA.analog.gain;
+%         gains = 1000./plx_gains(FIRA.raw.analog.params.kept_sigs).*FIRA.analog.gain;
         FIRA.raw.analog.data = ...
             [FIRA.raw.analog.data; [1000*[ta:sf:(ta+sf*(na-1))]' ...
-            da(:, FIRA.raw.analog.params.ks)./40]];
+            da(:, FIRA.raw.analog.params.kept_sigs).*...
+            repmat(gains,size(da,1),1)] ];
+% max(FIRA.raw.analog.data(:,2))
+%                 FIRA.raw.analog.data = [FIRA.raw.analog.data allad{i}/adgains(ind_ads(i))*FIRA.analog.gain(i)*1000]; 
 
         % save size of data, just 'cuz
         FIRA.raw.analog.params.asz = size(FIRA.raw.analog.data, 1);

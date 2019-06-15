@@ -1,5 +1,5 @@
-function parse(k)
-% function parse(k)
+function continue_ = parse(k)
+% function continue_ = parse(k)
 %
 % Parse method for class kbdData.
 % Does nothing because no raw data is stored
@@ -8,7 +8,10 @@ function parse(k)
 %   k ... the kbdData object
 %
 % Output:
-%   nada
+%   return flag
 
 % Copyright 2005 by Joshua I. Gold
 %   University of Pennsylvania
+
+% return flag
+continue_ = true;

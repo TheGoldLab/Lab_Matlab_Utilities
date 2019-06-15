@@ -1,4 +1,4 @@
-function parse(d)
+function continue_ = parse(d)
 % function continue_ = parse(d)
 %
 % Parse method for class dio (Digital I/O).
@@ -15,6 +15,9 @@ function parse(d)
 %   University of Pennsylvania
 
 global FIRA
+
+% return flag
+continue_ = true;
 
 % get the commands (<timestamp> <port> <data>)
 Ld = FIRA.raw.dio(:,1)>=FIRA.raw.trial.start_time & ...

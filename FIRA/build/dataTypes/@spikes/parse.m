@@ -1,5 +1,5 @@
-function parse(s)
-% function parse(s)
+function continue_ = parse(s)
+% function continue_ = parse(s)
 %
 % Parse method for class spikes. Reads
 %   FIRA.raw.spikes and FIRA.raw.trial
@@ -9,12 +9,15 @@ function parse(s)
 %   s ... the spikes object
 %
 % Output:
-%   nada
+%   continue_ ... flag that for now always returns true
 
 % Copyright 2005 by Joshua I. Gold
 %   University of Pennsylvania
 
 global FIRA
+
+% return flag
+continue_ = true;
 
 % get the indices of spikes from this trial
 if isempty(FIRA.raw.spikes)

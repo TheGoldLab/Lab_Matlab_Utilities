@@ -1,5 +1,5 @@
-function parse(lp)
-% function parse(lp)
+function continue_ = parse(lp)
+% function continue_ = parse(lp)
 %
 % Parse method for class lpHIDData.
 % Does nothing because no raw data is stored
@@ -8,7 +8,10 @@ function parse(lp)
 %   lp ... the lpHIDData object
 %
 % Output:
-%   squat and a half
+%   continue_ flag, always true for now
 
 % Copyright 2005 by Joshua I. Gold
 %   University of Pennsylvania
+
+% return flag
+continue_ = true;

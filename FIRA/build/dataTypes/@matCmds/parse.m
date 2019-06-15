@@ -1,5 +1,5 @@
-function parse(m)
-% function parse(m)
+function continue_ = parse(m)
+% function continue_ parse(m)
 %
 % Parse method for class matCmds
 % Reads FIRA.raw.matCmds and FIRA.raw.trial
@@ -17,6 +17,9 @@ function parse(m)
 
 global FIRA
 persistent cmdi cmds
+
+% return flag
+continue_ = true;
 
 % define cmds
 if isempty(cmds)

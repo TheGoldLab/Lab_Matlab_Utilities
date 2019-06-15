@@ -17,79 +17,82 @@ function varargout = plotGUI(varargin)
 global mainfig
 
 if nargin == 0  % LAUNCH GUI
-
-	mainfig = openfig(mfilename,'reuse');
-    
-	% Use system color scheme for figure:
-	set(mainfig, 'Color', get(0, 'defaultUicontrolBackgroundColor'));
-
-	% Generate a structure of handles to pass to callbacks, and store it. 
-	handles = guihandles(mainfig);
-    
-    % create a timer for automatic FIRA update .. period defaults to zero
-    set(handles.updateslider, 'Value', 0);
-    set(handles.updatetext, 'String', 'Auto Update off');
-    handles.update_timer = timer( ...
-        'TimerFcn',         @update_timer_Callback, ...
-        'ExecutionMode',    'fixedSpacing', ...
-        'Period',           0.01);
-    
-    % create a timer for script iti
-    period = round(get(handles.itislider, 'Value')*1000)/1000;
-    set(handles.ititext, 'String', sprintf('ITI: %.2f sec', period));
-    handles.iti_timer = timer( ...
-        'TimerFcn',         @iti_timer_Callback, ...
-        'ExecutionMode',    'fixedSpacing', ...
-        'Period',           period);
-
-    % THIS IS WHERE WE REGISTER THE PLOT TYPES
-    % we assume that each type has an associated function
-    % named plotGUI_<name>, and each function has 
-    % "setup" and "update" methods
-    handles.plots = struct('name', { ...
-        'summary';          ...
-        'scatter';          ...
-        'eyePosition';      ...
-        'psychometric';     ...
-        'quickT';           ...
-        'polarTC';          ...
-        'raster';           ...
-        'neurometricROC';   ...
-        'neurometricROCT';  ...
-        'deviations';       ...
-        }, 'func', [], 'figs', []);
-
-    % make the menus
-    for i = 1:length(handles.plots)
-        uimenu(handles.Plotmenu, ...
-            'Label',    [handles.plots(i).name '...'], ...
-            'tag',      handles.plots(i).name, ...
-            'Callback', ['plotGUI(''Plot_Callback'',gcbo,[],guidata(gcbo))']);
-        handles.plots(i).func = str2func(strcat('plotGUI_', handles.plots(i).name));
-    end
-
-    % associate the handles with the main figure
-	guidata(mainfig, handles);
-
-    % now make sure everything is set up appropriately
-    setup_all(handles);
-
-	if nargout > 0
-		varargout{1} = mainfig;
-	end
-
+   
+   mainfig = openfig(mfilename,'reuse');
+   
+   % Use system color scheme for figure:
+   set(mainfig, 'Color', get(0, 'defaultUicontrolBackgroundColor'));
+   
+   % Generate a structure of handles to pass to callbacks, and store it.
+   handles = guihandles(mainfig);
+   
+   % create a timer for automatic FIRA update .. period defaults to zero
+   set(handles.updateslider, 'Value', 0);
+   set(handles.updatetext, 'String', 'Auto Update off');
+   handles.update_timer = timer( ...
+      'TimerFcn',         @update_timer_Callback, ...
+      'ExecutionMode',    'fixedSpacing', ...
+      'Period',           0.01);
+   
+   % create a timer for script iti
+   period = round(get(handles.itislider, 'Value')*1000)/1000;
+   set(handles.ititext, 'String', sprintf('ITI: %.2f sec', period));
+   handles.iti_timer = timer( ...
+      'TimerFcn',         @iti_timer_Callback, ...
+      'ExecutionMode',    'fixedSpacing', ...
+      'Period',           period);
+   
+   % THIS IS WHERE WE REGISTER THE PLOT TYPES
+   % we assume that each type has an associated function
+   % named plotGUI_<name>, and each function has
+   % "setup" and "update" methods
+   handles.plots = struct('name', { ...
+      'summary';          ...
+      'scatter';          ...
+      'eyePosition';      ...
+      'psychometric';     ...
+      'quickT';           ...
+      'polarTC';          ...
+      'raster';           ...
+      'raster_only';           ...
+      'neurometricROC';   ...
+      'neurometricROCT';  ...
+      'deviations';       ...
+      'LDdots';           ...
+      'LDpsychDotsReg';           ...
+      }, 'func', [], 'figs', []);
+   
+   % make the menus
+   for i = 1:length(handles.plots)
+      uimenu(handles.Plotmenu, ...
+         'Label',    [handles.plots(i).name '...'], ...
+         'tag',      handles.plots(i).name, ...
+         'Callback', ['plotGUI(''Plot_Callback'',gcbo,[],guidata(gcbo))']);
+      handles.plots(i).func = str2func(strcat('plotGUI_', handles.plots(i).name));
+   end
+   
+   % associate the handles with the main figure
+   guidata(mainfig, handles);
+   
+   % now make sure everything is set up appropriately
+   setup_all(handles);
+   
+   if nargout > 0
+      varargout{1} = mainfig;
+   end
+   
 elseif ischar(varargin{1}) % INVOKE NAMED SUBFUNCTION OR CALLBACK
-
-	try
-		if (nargout)
-			[varargout{1:nargout}] = feval(varargin{:}); % FEVAL switchyard
-		else
-			feval(varargin{:}); % FEVAL switchyard
-		end
-	catch
-		disp(lasterr);
-	end
-
+   
+   try
+      if (nargout)
+         [varargout{1:nargout}] = feval(varargin{:}); % FEVAL switchyard
+      else
+         feval(varargin{:}); % FEVAL switchyard
+      end
+   catch
+      disp(lasterr);
+   end
+   
 end
 
 % --------------------------------------------------------------------
@@ -103,85 +106,85 @@ function setup_all(handles)
 global FIRA
 
 if isempty(FIRA)
-    %%%
-    % No data
-    %%%
-    set(handles.text1,          'String',  'Status: no data');
-    set(handles.updatebutton,   'Visible', 'off');
-    set(handles.purgebutton,    'Visible', 'off');
-    set(handles.updatetext,     'Visible', 'off');
-    set(handles.updateslider,   'Visible', 'off');
-    set(handles.startbutton,    'Visible', 'off');
-    set(handles.pausebutton,    'Visible', 'off');
-    set(handles.stopbutton,     'Visible', 'off');
-    set(handles.ititext,        'Visible', 'off');
-    set(handles.itislider,        'Visible', 'off');
-    
+   %%%
+   % No data
+   %%%
+   set(handles.text1,          'String',  'Status: no data');
+   set(handles.updatebutton,   'Visible', 'off');
+   set(handles.purgebutton,    'Visible', 'off');
+   set(handles.updatetext,     'Visible', 'off');
+   set(handles.updateslider,   'Visible', 'off');
+   set(handles.startbutton,    'Visible', 'off');
+   set(handles.pausebutton,    'Visible', 'off');
+   set(handles.stopbutton,     'Visible', 'off');
+   set(handles.ititext,        'Visible', 'off');
+   set(handles.itislider,        'Visible', 'off');
+   
 elseif strcmp(FIRA.header.filetype, 'connect')
-    %%%
-    % Connected to Plexon
-    %%%
-    set(handles.text1,          'String', ...
-        sprintf('Status: connected to Plexon, %d trials', size(FIRA.ecodes.data,1)));
-    set(handles.updatebutton,   'Visible', 'on');
-    set(handles.purgebutton,    'Visible', 'on');
-    set(handles.updatetext,     'Visible', 'on');
-    set(handles.updateslider,   'Visible', 'on');
-    set(handles.startbutton,    'Visible', 'off');
-    set(handles.pausebutton,    'Visible', 'off');
-    set(handles.stopbutton,     'Visible', 'off');
-    set(handles.ititext,        'Visible', 'off');
-    set(handles.itislider,      'Visible', 'off');
-
-    % start the auto timer
-    if(get(handles.updateslider, 'Value') > 0.01)
-        start(handles.update_timer);
-    end
-
+   %%%
+   % Connected to Plexon
+   %%%
+   set(handles.text1,          'String', ...
+      sprintf('Status: connected to Plexon, %d trials', size(FIRA.ecodes.data,1)));
+   set(handles.updatebutton,   'Visible', 'on');
+   set(handles.purgebutton,    'Visible', 'on');
+   set(handles.updatetext,     'Visible', 'on');
+   set(handles.updateslider,   'Visible', 'on');
+   set(handles.startbutton,    'Visible', 'off');
+   set(handles.pausebutton,    'Visible', 'off');
+   set(handles.stopbutton,     'Visible', 'off');
+   set(handles.ititext,        'Visible', 'off');
+   set(handles.itislider,      'Visible', 'off');
+   
+   % start the auto timer
+   if(get(handles.updateslider, 'Value') > 0.01)
+      start(handles.update_timer);
+   end
+   
 elseif strcmp(FIRA.header.filetype, 'psych')
-    %%%
-    % running psych script
-    %%%
-    set(handles.text1,          'String', ...
-        sprintf('Status: running script, %d trials', size(FIRA.ecodes.data, 1)));
-    set(handles.updatebutton,   'Visible', 'off');
-    set(handles.purgebutton,    'Visible', 'off');
-    set(handles.updatetext,     'Visible', 'off');
-    set(handles.updateslider,   'Visible', 'off');
-    set(handles.startbutton,    'Visible', 'on');
-    set(handles.pausebutton,    'Visible', 'on');
-    set(handles.stopbutton,     'Visible', 'on');
-    set(handles.ititext,        'Visible', 'on');
-    set(handles.itislider,      'Visible', 'on');
-
+   %%%
+   % running psych script
+   %%%
+   set(handles.text1,          'String', ...
+      sprintf('Status: running script, %d trials', size(FIRA.ecodes.data, 1)));
+   set(handles.updatebutton,   'Visible', 'off');
+   set(handles.purgebutton,    'Visible', 'off');
+   set(handles.updatetext,     'Visible', 'off');
+   set(handles.updateslider,   'Visible', 'off');
+   set(handles.startbutton,    'Visible', 'on');
+   set(handles.pausebutton,    'Visible', 'on');
+   set(handles.stopbutton,     'Visible', 'on');
+   set(handles.ititext,        'Visible', 'on');
+   set(handles.itislider,      'Visible', 'on');
+   
 else
-    %%%
-    % Opened a file
-    %%%
-    if isempty(FIRA.header.filename) || strcmp(FIRA.header.filename,'auto') %BSH ||
-        set(handles.text1, 'String', ...
-            sprintf('Status: file (unnamed), %d trials', size(FIRA.ecodes.data,1)));
-    else
-        [pathstr, name, ext, versn] = fileparts(FIRA.header.filename{1});
-        set(handles.text1, 'String', ...
-            sprintf('Status: file <%s>, %d trials', name, size(FIRA.ecodes.data,1)));
-    end
-    set(handles.updatebutton,   'Visible', 'off');
-    set(handles.purgebutton,    'Visible', 'off');
-    set(handles.updatetext,     'Visible', 'off');
-    set(handles.updateslider,   'Visible', 'off');
-    set(handles.startbutton,    'Visible', 'off');
-    set(handles.pausebutton,    'Visible', 'off');
-    set(handles.stopbutton,     'Visible', 'off');
-    set(handles.ititext,        'Visible', 'off');
-    set(handles.itislider,      'Visible', 'off');
+   %%%
+   % Opened a file
+   %%%
+   if isempty(FIRA.header.filename) || strcmp(FIRA.header.filename,'auto') %BSH ||
+      set(handles.text1, 'String', ...
+         sprintf('Status: file (unnamed), %d trials', size(FIRA.ecodes.data,1)));
+   else
+      [pathstr, name, ext, versn] = fileparts(FIRA.header.filename{1});
+      set(handles.text1, 'String', ...
+         sprintf('Status: file <%s>, %d trials', name, size(FIRA.ecodes.data,1)));
+   end
+   set(handles.updatebutton,   'Visible', 'off');
+   set(handles.purgebutton,    'Visible', 'off');
+   set(handles.updatetext,     'Visible', 'off');
+   set(handles.updateslider,   'Visible', 'off');
+   set(handles.startbutton,    'Visible', 'off');
+   set(handles.pausebutton,    'Visible', 'off');
+   set(handles.stopbutton,     'Visible', 'off');
+   set(handles.ititext,        'Visible', 'off');
+   set(handles.itislider,      'Visible', 'off');
 end
 
 % set up all of the figures
 for i = 1:length(handles.plots)
-    for j = 1:length(handles.plots(i).figs)
-        feval(handles.plots(i).func, 'setup', guidata(handles.plots(i).figs(j)));
-    end
+   for j = 1:length(handles.plots(i).figs)
+      feval(handles.plots(i).func, 'setup', guidata(handles.plots(i).figs(j)));
+   end
 end
 
 % --------------------------------------------------------------------
@@ -193,20 +196,20 @@ end
 function update_all(handles)
 
 for i = 1:length(handles.plots)
-    for j = 1:length(handles.plots(i).figs)
-        feval(handles.plots(i).func, 'update_cb', guidata(handles.plots(i).figs(j)));
-    end
+   for j = 1:length(handles.plots(i).figs)
+      feval(handles.plots(i).func, 'update_cb', guidata(handles.plots(i).figs(j)));
+   end
 end
 
 %| ABOUT CALLBACKS:
-%| GUIDE automatically appends subfunction prototypes to this file, and 
-%| sets objects' callback properties to call them through the FEVAL 
+%| GUIDE automatically appends subfunction prototypes to this file, and
+%| sets objects' callback properties to call them through the FEVAL
 %| switchyard above. This comment describes that mechanism.
 %|
 %| Each callback subfunction declaration has the following form:
 %| <SUBFUNCTION_NAME>(H, EVENTDATA, HANDLES, VARARGIN)
 %|
-%| The subfunction name is composed using the object's Tag and the 
+%| The subfunction name is composed using the object's Tag and the
 %| callback type separated by '_', e.g. 'itislider_Callback',
 %| 'figure1_CloseRequestFcn', 'axis1_ButtondownFcn'.
 %|
@@ -233,7 +236,7 @@ end
 %| closing parenthesis.
 
 %%%
-% MENU CALLBACKS 
+% MENU CALLBACKS
 %%%
 
 % --------------------------------------------------------------------
@@ -242,7 +245,7 @@ end
 %
 % CALLBACK: Openentry_Callback
 %
-% calls "uigetfile" to get the filename from the filesystem, 
+% calls "uigetfile" to get the filename from the filesystem,
 % then figures out what kind of file it is & whether it can
 % be opened.
 %
@@ -251,48 +254,48 @@ function varargout = Openentry_Callback(h, eventdata, handles, varargin)
 global FIRA
 
 % close anything that's open
-if ~isempty(FIRA)    
-    if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
-            'Yes', 'No', 'Yes'))
-        return
-    end
-    Closeentry_Callback(h, eventdata, handles);
+if ~isempty(FIRA)
+   if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
+         'Yes', 'No', 'Yes'))
+      return
+   end
+   Closeentry_Callback(h, eventdata, handles);
 end
 
 % use uigetfile dialog to get the file name
 [fname, pname] = uigetfile( ...
-       {'*.mat;*.nex;*.plx;*.A;*.E;*.gz', 'data files'; ...
-        '*.*',  'All Files (*.*)'}, ...
-        'Pick a data file');
+   {'*.mat;*.nex;*.plx;*.A;*.E;*.gz', 'data files'; ...
+   '*.*',  'All Files (*.*)'}, ...
+   'Pick a data file');
 if ~fname
-    return
+   return
 end
-              
+
 % check if the file is a '.mat' file with FIRA in it
 filename = [pname fname];
 
 if length(filename) > 4 & strcmp(filename(end-3:end), '.mat')
-
-    % let openFIRA do the work of finding the appropriate variable,
-    % setting it to the global FIRA and converting it to new-style
-    openFIRA(filename);
+   
+   % let openFIRA do the work of finding the appropriate variable,
+   % setting it to the global FIRA and converting it to new-style
+   openFIRA(filename);
 else
-    
-    % Otherwise try to read a raw data file
-    % First get the params to use to convert to FIRA
-    params = getGUI_FIRAparams;
-    
-    if ~isempty(params) % not cancelled
-
-        % setup the FIRA data structure
-        set(handles.text1, 'String', sprintf('Status: reading file <%s>.', fname))
-        drawnow;
-
-        % call buildScript bFile to build FIRA from filename
-        bFile(filename, [], params.generator, [], params.keep_spikes, ...
-            params.keep_sigs, params.keep_matlab, params.keep_dio, ...
-            params.flags, handles.text1);
-    end
+   
+   % Otherwise try to read a raw data file
+   % First get the params to use to convert to FIRA
+   params = getGUI_FIRAparams;
+   
+   if ~isempty(params) % not cancelled
+      
+      % setup the FIRA data structure
+      set(handles.text1, 'String', sprintf('Status: reading file <%s>.', fname))
+      drawnow;
+      
+      % call buildScript bFile to build FIRA from filename
+      bFile(filename, [], params.generator, [], params.keep_spikes, ...
+         params.keep_sigs, params.keep_matlab, params.keep_dio, ...
+         params.flags, handles.text1);
+   end
 end
 
 % make sure everything is set up appropriately for the new FIRA
@@ -301,7 +304,7 @@ setup_all(handles);
 % --------------------------------------------------------------------
 % File Menu
 %  Connect...
-% 
+%
 % CALLBACK: Connectentry_Callback
 %
 % makes a connection to the plexon server
@@ -312,26 +315,26 @@ global FIRA
 
 % make sure we're on the right computer
 if ~(strcmp(computer, 'PCWIN') || strcmp(computer, 'PCWIN64'))
-    errordlg('Wrong computer, woopiedoopie');
-    return
+   errordlg('Wrong computer, woopiedoopie');
+   return
 end
 
 % Close anything that's open
 if ~isempty(FIRA)
-    if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
-        'Yes', 'No', 'Yes'))
-        return;
-    end
-    Closeentry_Callback(h, eventdata, handles);
+   if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
+         'Yes', 'No', 'Yes'))
+      return;
+   end
+   Closeentry_Callback(h, eventdata, handles);
 end
 
 % Get the params to use to convert to FIRA
 params = getGUI_FIRAparams;
 if ~isempty(params) % not cancelled
-
-    % make the connection
-    bConnect(params.generator, params.keep_spikes, params.keep_sigs, ...
-        params.keep_matlab, params.keep_dio, params.flags);
+   
+   % make the connection
+   bConnect(params.generator, params.keep_spikes, params.keep_sigs, ...
+      params.keep_matlab, params.keep_dio, params.flags);
 end
 
 % make sure everything is set up appropriately for the new FIRA
@@ -340,7 +343,7 @@ setup_all(handles);
 % --------------------------------------------------------------------
 % File Menu
 %  Run Script...
-% 
+%
 % CALLBACK: Scriptentry_Callback
 %
 % run a script
@@ -357,42 +360,42 @@ AssertOSX;
 
 % Close anything that's open
 if ~isempty(FIRA)
-    if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
-        'Yes', 'No', 'Yes'))
-        return;
-    end
-    Closeentry_Callback(h, eventdata, handles);
+   if ~strcmp('Yes', questdlg('Do you want to close the existing file?', 'File open', ...
+         'Yes', 'No', 'Yes'))
+      return;
+   end
+   Closeentry_Callback(h, eventdata, handles);
 end
 
 % use uigetfile dialog to get the file name
 % restrict to .m files
 [fname, pname] = uigetfile( ...
-       {'*.m', 'm-files'; ...
-        '*.*', 'All Files (*.*)'}, ...
-        'Pick an exp file');
+   {'*.m', 'm-files'; ...
+   '*.*', 'All Files (*.*)'}, ...
+   'Pick an exp file');
 if ~fname
-    return
+   return
 end
 
 if ~isempty(fname) && strncmp(fname, 'exp', 3) &&...
-        fname(end) == 'm'
-    
-    % save the function name
-    handles.scripthandle = str2func(fname(1:end-2));
-    handles.scripton     = false;
-    guidata(h, handles); 
-
-    % run script with 'init' flag
-    feval(handles.scripthandle, 'setup');
-    
-    % setup the figs
-    setup_all(handles);
+      fname(end) == 'm'
+   
+   % save the function name
+   handles.scripthandle = str2func(fname(1:end-2));
+   handles.scripton     = false;
+   guidata(h, handles);
+   
+   % run script with 'init' flag
+   feval(handles.scripthandle, 'setup');
+   
+   % setup the figs
+   setup_all(handles);
 end
 
 % --------------------------------------------------------------------
 % File Menu
 %  Close
-% 
+%
 % CALLBACK: Closeentry_Callback
 %
 % Closes the current copy of FIRA
@@ -402,16 +405,16 @@ function varargout = Closeentry_Callback(h, eventdata, handles, varargin)
 global FIRA
 
 if isempty(FIRA)
-    return
+   return
 end
 
 if strcmp(FIRA.header.filetype, 'connect')
-
-    % Close connection to plexon
-    PL_Close(FIRA.header.filename);
-
-    % stop the automatic update (in case it is still active)
-    stop(handles.update_timer);     
+   
+   % Close connection to plexon
+   PL_Close(FIRA.header.filename);
+   
+   % stop the automatic update (in case it is still active)
+   stop(handles.update_timer);
 end
 
 % clear FIRA
@@ -426,7 +429,7 @@ setup_all(handles);
 %
 % CALLBACK: Saveasentry_Callback
 %
-% Saves FIRA to a file 
+% Saves FIRA to a file
 % WARNING: this removes all the temporary fields of FIRA
 %   spm, raw, trial
 function varargout = Saveasentry_Callback(h, eventdata, handles, varargin)
@@ -435,19 +438,19 @@ global FIRA mainfig
 
 % make sure there's something to save
 if isempty(FIRA)
-    return
+   return
 end
 
 % get a filename
 [fname,pname] = uiputfile('*.*', 'Select filename for writing');
 if ~fname % selected 'cancel'
-    return
+   return
 end
 outname = [pname fname]
 
 % if we're connected, we need to run the "cleanup" routine
-if strcmp(FIRA.header.filetype, 'connect')    
-    cleaupbutton_Callback(mainfig, [], guidata(mainfig));
+if strcmp(FIRA.header.filetype, 'connect')
+   cleaupbutton_Callback(mainfig, [], guidata(mainfig));
 end
 
 % save it
@@ -455,10 +458,10 @@ saveFIRA(outname);
 
 % --------------------------------------------------------------------
 % Plot Menu
-% 
+%
 % CALLBACK: Plot_callback
 %
-% generic callback function ... calls the appropriate function based on 
+% generic callback function ... calls the appropriate function based on
 %   its tag
 %
 function varargout = Plot_Callback(h, eventdata, handles, varargin)
@@ -469,9 +472,9 @@ tag = get(h, 'tag');
 % call the plot routine with the "destroy" callback as an argument
 ind = find(strcmp(tag, {handles.plots.name}));
 if isscalar(ind)
-    handles.plots(ind).figs(end+1) = feval(handles.plots(ind).func, ...
-        {['plotGUI(''figure_destroy_Callback'', ''' tag ''', gcbo)']});
-    guidata(h, handles);   
+   handles.plots(ind).figs(end+1) = feval(handles.plots(ind).func, ...
+      {['plotGUI(''figure_destroy_Callback'', ''' tag ''', gcbo)']});
+   guidata(h, handles);
 end
 
 %%%
@@ -483,7 +486,7 @@ end
 % CALLBACK: delete_Callback
 %
 %   called when closing the window
-% 
+%
 function varargout = delete_Callback(h, eventdata, handles, varargin)
 
 % stop the timer(s)
@@ -492,8 +495,8 @@ stop(handles.iti_timer);
 
 % delete all the figs
 for i = 1:length(handles.plots)
-    delete(handles.plots(i).figs);
-    handles.plots(i).figs = [];
+   delete(handles.plots(i).figs);
+   handles.plots(i).figs = [];
 end
 guidata(h, handles);
 
@@ -512,18 +515,18 @@ bConnect_loop;
 
 % update status message
 if isempty(FIRA.ecodes.data)
-    num_trials = 0;
+   num_trials = 0;
 else
-    num_trials = sum(~isnan(FIRA.ecodes.data(:,1)));
+   num_trials = sum(~isnan(FIRA.ecodes.data(:,1)));
 end
 set(handles.text1, 'String', ...
-    sprintf('Status: connected to Plexon, %d trials', num_trials));
+   sprintf('Status: connected to Plexon, %d trials', num_trials));
 
 % update the display
 update_all(handles)
 
 % --------------------------------------------------------------------
-% 
+%
 % CALLBACK: updateslider_Callback
 %
 %   called when the "auto update" slider is changed.
@@ -536,25 +539,25 @@ function varargout = updateslider_Callback(h, eventdata, handles, varargin)
 period = round(get(h, 'Value')*1000)/1000;
 
 if period < 0.1
-    
-    % inactivate timer
-    stop(handles.update_timer);
-    set(handles.updatetext, 'String', 'Auto Update off');
-
+   
+   % inactivate timer
+   stop(handles.update_timer);
+   set(handles.updatetext, 'String', 'Auto Update off');
+   
 else
-
-    % show period
-    set(handles.updatetext, 'String', sprintf('Auto Update: %.1f sec', period));
-
-    % set period (timer must be off)
-    if strcmp(get(handles.update_timer, 'Running'), 'on')
-        stop(handles.update_timer);
-        set(handles.update_timer, 'Period', period);
-        start(handles.update_timer);
-    else
-        set(handles.update_timer, 'Period', period);
-        start(handles.update_timer);
-    end
+   
+   % show period
+   set(handles.updatetext, 'String', sprintf('Auto Update: %.1f sec', period));
+   
+   % set period (timer must be off)
+   if strcmp(get(handles.update_timer, 'Running'), 'on')
+      stop(handles.update_timer);
+      set(handles.update_timer, 'Period', period);
+      start(handles.update_timer);
+   else
+      set(handles.update_timer, 'Period', period);
+      start(handles.update_timer);
+   end
 end
 
 % --------------------------------------------------------------------
@@ -573,7 +576,7 @@ updatebutton_Callback(mainfig,[],guidata(mainfig));
 %
 % CALLBACK: purgebutton_Callback
 %
-%   called when "Purge" button is pressed. 
+%   called when "Purge" button is pressed.
 %   calls builFIRA_purge to purge data from FIRA
 %
 function varargout = purgebutton_Callback(h, eventdata, handles, varargin)
@@ -620,15 +623,15 @@ function varargout = pausebutton_Callback(h, eventdata, handles, varargin)
 
 % make sure script is running
 if ~handles.scripton
-    return
+   return
 end
 
 if strcmp(get(handles.iti_timer, 'Running'), 'on')
-    stop(handles.iti_timer);
-    set(handles.pausebutton, 'String', 'Continue');
+   stop(handles.iti_timer);
+   set(handles.pausebutton, 'String', 'Continue');
 else
-    start(handles.iti_timer);
-    set(handles.pausebutton, 'String', 'Pause');
+   start(handles.iti_timer);
+   set(handles.pausebutton, 'String', 'Pause');
 end
 
 % --------------------------------------------------------------------
@@ -641,7 +644,7 @@ function varargout = stopbutton_Callback(h, eventdata, handles, varargin)
 
 % make sure script is running
 if ~handles.scripton
-    return
+   return
 end
 
 % stop the timer
@@ -675,11 +678,11 @@ period = round(get(h, 'Value')*1000)/1000;
 set(handles.ititext, 'String', sprintf('ITI: %.2f sec', period));
 
 if strcmp(get(handles.iti_timer, 'Running'), 'on')
-    stop(handles.iti_timer);
-    set(handles.iti_timer, 'Period', period);
-    start(handles.iti_timer);
+   stop(handles.iti_timer);
+   set(handles.iti_timer, 'Period', period);
+   start(handles.iti_timer);
 else
-    set(handles.iti_timer, 'Period', period);
+   set(handles.iti_timer, 'Period', period);
 end
 
 % --------------------------------------------------------------------
@@ -715,7 +718,7 @@ handles = guidata(mainfig);
 % remove the figure from the appropriate list
 ind = strmatch(fig_type, {handles.plots.name});
 if isscalar(ind)
-    handles.plots(ind).figs(handles.plots(ind).figs==h_to_destroy) = [];
+   handles.plots(ind).figs(handles.plots(ind).figs==h_to_destroy) = [];
 end
 
 % re-set the data

@@ -55,6 +55,7 @@ readers = {...
     @connectPLX         'connectPLX'  {'connect'};  ... % PLEXON CONNECTION
     @readPLX_plxFile    'plexon'      {'.plx'};     ... % PLEXON FILES
     @readTDL_logFile    'topsFile'    {'.mat'};     ... % TOPS DATA LOG FILE
+    @readPLX_naoFile    'nao'         {'.nao'};     ... % NEX (Neural EXplorer) FILES converted from Alpha-Omega files
 };
 
 % To decide which "reader" to use on the data file(s):
