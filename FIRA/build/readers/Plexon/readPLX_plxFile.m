@@ -64,6 +64,7 @@ FIRA.header.filename = {fname};
 FIRA.header.filetype = 'plx';
 FIRA.header.paradigm = 'xxx';
 
+% Get information from the header
 [OpenedFileName, version, freq, comment, Trodalness, NPW, PreThresh, ...
    SpikePeakV, SpikeADResBits, SlowPeakV, SlowADResBits, Duration, DateTime] = ...
    plx_information(fname);
@@ -203,7 +204,7 @@ if keep_analog>0
             end
             FIRA.raw.analog.data = t*1000;
             for i=1:n_ch
-                FIRA.raw.analog.data = [FIRA.raw.analog.data allad{i}/adgains(ind_ads(i))];%*FIRA.analog.gain(i)*1000]; 
+                FIRA.raw.analog.data = [FIRA.raw.analog.data allad{i}./adgains(ind_ads(i)).*FIRA.analog.gain(i).*1000]; 
             end
         else
             disp('multiple sampling rates, not supported by current version of readPLX_plxFile.m');

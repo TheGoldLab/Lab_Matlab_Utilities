@@ -14,26 +14,26 @@ include_list = {'trial', 'ecodes'};
 
 % keep_spikes is list of spike channels/units or keyword 'all' (default)
 if ~isempty(spike_list)
-    include_list = [include_list, 'spikes', {{'keep_spikes', spike_list}}];
+    include_list = {include_list{:}, 'spikes', {'keep_spikes', spike_list}};
 end
 
 % keep sigs is list of channels or keyword 'all' (default)
 if ~isempty(sig_list)
     if iscell(sig_list)
-        include_list = [include_list, 'analog', ...
-            {{'keep_sigs', sig_list{1}, 'names', sig_list{2}}}];
+        include_list = {include_list{:}, 'analog', ...
+            {'keep_sigs', sig_list{1}, 'names', sig_list{2}}};
     else
-        include_list = [include_list, 'analog', {{'keep_sigs', sig_list}}];
+        include_list = {include_list{:}, 'analog', {'keep_sigs', sig_list}};
     end
 end
 
 % keep_matCmds is just a flag (default false)
 if keep_matCmds
-    include_list = [include_list, 'matCmds'];
+    include_list = {include_list{:}, 'matCmds'};
 end
 
 if keep_dio
-    include_list = [include_list, 'dio'];
+    include_list = {include_list{:}, 'dio'};
 end
 
 % INIT FIRA

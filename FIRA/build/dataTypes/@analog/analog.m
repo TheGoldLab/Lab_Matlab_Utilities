@@ -43,7 +43,7 @@ an = struct( ...
     'keep_sigs',     'all',  ... % 'all' or list of signal numbers
     'names',         {names},... % names of analog channels .. filled in last->first
     'new_names',     [],     ... % {<index> <name>; ...}
-    'gain',          10.2,   ... % set in Rex
+    'gain',          20.4,   ... % set in Rex -- was 10.2, changed 2/25/22 by jig
     'acquire_rates', [],     ... % override of acquire rates
     'resample',      [],     ... % possibly new sample rates {'channel' <sr>; ...}
     'reoffset',      [],     ... % possibly new offset {'channel' <offset>; ...}
@@ -96,7 +96,7 @@ else
         % Alpha-omega use ch 17+ for external analog signals, here we use
         % 17 and 18 for eye signals. Long Ding 9/4/2015
         % added two more analog channels. Long Ding 12/12/2016
-        an.keep_sigs = sort(unique(an.keep_sigs(an.keep_sigs>=0 & an.keep_sigs<=20))); 
+        an.keep_sigs = sort(unique(an.keep_sigs(an.keep_sigs>=0 & an.keep_sigs<=64)));
     end
     
     % make smoothing function
@@ -125,7 +125,7 @@ else
         'data',         []);      % mxn" cell array
     
     % conditionally fill names
-    if ~isempty(an.names)
+    if ~isempty(an.names) && all(an.keep_sigs <= length(an.names))
         FIRA.analog.name = an.names(an.keep_sigs);
     end
 
