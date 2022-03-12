@@ -172,24 +172,28 @@ end
 
 %% read analog data
 if keep_analog>0
-%     FIRA.spm.analog;
+    %     FIRA.spm.analog;
     % find analog channels that have signals, use evcounts(301:316) for the
     % 16 analog channels
     % <timestamp (ms)> <ch1 (mV)> <ch2 (mV)>...
     % adcounts = evcounts(300:315);
-    ind_ads = find(adcounts>0);
-    [nad,adgains] = plx_adchan_gains(OpenedFileName);
-    [nad,adnames] = plx_adchan_names(OpenedFileName);
-    [n,adfreq] = plx_adchan_freqs(OpenedFileName);
+    [~,adgains] = plx_adchan_gains(OpenedFileName);
+    % [nad,adnames] = plx_adchan_names(OpenedFileName);
+    [~,raw]     = plx_ad_chanmap(OpenedFileName);
+    [~,adfreq]  = plx_adchan_freqs(OpenedFileName);
 
     % find & verify all the analog channels
-    Lgood = verify(FIRA.spm.analog, ind_ads', adfreq);
+    ind_ads = raw(adcounts>0);
+    Lgood   = verify(FIRA.spm.analog, ind_ads', adfreq);
     ind_ads = ind_ads(Lgood);
+    adgains = adgains(adcounts>0);
+    adgains = adgains(Lgood);
 
     if ~isempty(ind_ads)
         n_ch = length(ind_ads);
         allad = cell(n_ch,1);
-        adfreq = zeros(n_ch,1); nad = adfreq; 
+        adfreq = zeros(n_ch,1); 
+        nad = adfreq; 
         for i=1:length(ind_ads)
             [adfreq(i), nad(i), tsad, fnad, allad{i}] = plx_ad_v(OpenedFileName, ind_ads(i)-1);
         end
@@ -199,12 +203,12 @@ if keep_analog>0
             k = 1;
             timestep = 1.0/adfreq(1);
             for j = 1:length(tsad)
-                t(k:k+fnad(j)-1) = [0:1:fnad(j)-1]*timestep + tsad(j);
+                t(k:k+fnad(j)-1) = (0:1:fnad(j)-1).*timestep + tsad(j);
                 k = k+fnad(j);
             end
             FIRA.raw.analog.data = t*1000;
             for i=1:n_ch
-                FIRA.raw.analog.data = [FIRA.raw.analog.data allad{i}./adgains(ind_ads(i)).*FIRA.analog.gain(i).*1000]; 
+                FIRA.raw.analog.data = [FIRA.raw.analog.data allad{i}./adgains(i).*FIRA.analog.gain(i).*1000]; 
             end
         else
             disp('multiple sampling rates, not supported by current version of readPLX_plxFile.m');
