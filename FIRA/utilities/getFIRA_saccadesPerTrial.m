@@ -1,5 +1,5 @@
-function [sacs_, bf_] = getFIRA_saccadesPerTrial(trial, options)
-%function [sacs_, bf_] = getFIRA_saccades(trial, options)
+function [sacs_, bf_] = getFIRA_saccadesPerTrial(trial, varargin)
+%function [sacs_, bf_] = getFIRA_saccades(trial, varargin)
 %
 % Convenience function recalibrate eye position to fixation, and return 
 %   saccade parameters from the current trial in FIRA.spm
@@ -21,19 +21,26 @@ function [sacs_, bf_] = getFIRA_saccadesPerTrial(trial, options)
 % Copyright 2005 by Joshua I. Gold
 %   University of Pennsylvania
 
-arguments
+if nargin < 1 || isempty(trial)
     trial = 1;
-    options.num_saccades = 2;
-    options.recal = true;
-    options.heye = 'horiz_eye';
-    options.veye = 'vert_eye';
-    options.fpoff = 'fp_off';
-    options.fpx = 'fp_x';
-    options.fpy = 'fp_x';
-    options.max_time = 1000; % ms
-    options.hgain = 1;
-    options.vgain = 1;
-    options.saccadeParser = @findSaccadesA;
+end
+
+% Default options
+options = struct( ...
+    'num_saccades', 2, ...
+    'recal',        true, ...
+    'heye',         'horiz_eye', ...
+    'veye',         'vert_eye', ...
+    'fpoff',        'fp_off', ...
+    'fpx',          'fp_x', ...
+    'fpy',          'fp_x', ...
+    'max_time',     1000, ... % ms
+    'hgain',        1, ...
+    'vgain',        1, ...
+    'saccadeParser',@findSaccadesA);
+
+for ii = 1:2:nargin-1
+    options.(varargin{ii}) = varargin{ii+1};
 end
 
 global FIRA
