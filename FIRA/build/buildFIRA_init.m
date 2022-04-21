@@ -216,8 +216,9 @@ end
 %   3. everything else
 % added 2013/07/30 yl
 fn = fieldnames(FIRA.spm);
+otherfields = setdiff(fn, {'trial', 'ecodes'});
 FIRA.spm = orderfields(FIRA.spm, cat(3-min(size(fn,1),2), ...
     intersect(fn, 'trial'), intersect(fn, 'ecodes'), ...
-    setdiff(fn, {'trial', 'ecodes'})));
+    otherfields{:}));
 
 
