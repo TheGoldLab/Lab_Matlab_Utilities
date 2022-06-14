@@ -150,7 +150,7 @@ keep_analog = double(isfield(FIRA.raw, 'analog'));
 %%%
 % read the data
 %%%
-[tscounts, wfcounts, evcounts, adcounts] = plx_info(OpenedFileName,1);
+[tscounts, ~, ~, adcounts] = plx_info(OpenedFileName,1);
 
 %% read spikes
 if keep_spikes
@@ -195,7 +195,7 @@ if keep_analog>0
         adfreq = zeros(n_ch,1); 
         nad = adfreq; 
         for i=1:length(ind_ads)
-            [adfreq(i), nad(i), tsad, fnad, allad{i}] = plx_ad_v(OpenedFileName, ind_ads(i)-1);
+            [adfreq(i), nad(i), tsad, fnad, allad{i}] = plx_ad_v(OpenedFileName, ind_ads(i));
         end
  
         if length(unique(adfreq))==1
