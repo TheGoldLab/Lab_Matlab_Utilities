@@ -22,7 +22,7 @@ function [sacs_, bf_] = getFIRA_saccadesLD(trial, num_saccades, recal, ...
 %   University of Pennsylvania
 
 global FIRA
-global eyes 
+% global eyes 
 
 if nargin < 2
     num_saccades = 1;
@@ -61,8 +61,8 @@ sacs_ = [];
 if isfield(FIRA, 'analog')
 
     % get indices of horizontal, vertical eye position data
-    eyeX = strcmp(heye, FIRA.analog.name);
-    eyeY = strcmp(veye, FIRA.analog.name);
+    eyeX = find(strcmp(heye, FIRA.analog.name));
+    eyeY = find(strcmp(veye, FIRA.analog.name));
 
     % check that we have appropriate analog data
     if any(eyeX) && ~isempty(FIRA.analog.data(trial, eyeX).values) && ...
@@ -83,11 +83,10 @@ if isfield(FIRA, 'analog')
             return
         end
 
-        eyes(end+1,[1 2]) = ...
-            [mean(FIRA.analog.data(trial, eyeX).values(fpoff_samp-10:fpoff_samp)), ...
-            mean(FIRA.analog.data(trial, eyeY).values(fpoff_samp-10:fpoff_samp))];
+%         eyes(end+1,[1 2]) = ...
+%             [mean(FIRA.analog.data(trial, eyeX).values(fpoff_samp-10:fpoff_samp)), ...
+%             mean(FIRA.analog.data(trial, eyeY).values(fpoff_samp-10:fpoff_samp))];
             
-
         if recal
 
             % re-calibrate eye position to last 10 samples of fixation

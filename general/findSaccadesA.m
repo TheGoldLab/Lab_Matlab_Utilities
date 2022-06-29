@@ -186,6 +186,8 @@ if nargin >= 5 && show_fig
     end
     
     axes(topp);
+    input('what next?');
+
 end
 %     sacs_
 %     
