@@ -8,7 +8,7 @@ function varargout = plotGUI_polarTC(varargin)
 %    plotGUI_polarTC('callback_name', ...) invoke the named callback.
 %
 
-if nargin == 0 | ~ischar(varargin{1}) % LAUNCH GUI
+if nargin == 0 || ~ischar(varargin{1}) % LAUNCH GUI
 
     % open the figure
     fig = openfig(mfilename,'new');
@@ -166,10 +166,10 @@ function update_cb(handles)
 global FIRA
 
 % check the spike menu
-if ~isempty(FIRA) & (handles.num_spikes ~= length(FIRA.spikes.id))
+if ~isempty(FIRA) && (handles.num_spikes ~= length(FIRA.spikes.id))
     gsGUI_spikeByID('setf', handles.spikemenu);
     handles.num_spikes = length(FIRA.spikes.id);
-elseif isempty(FIRA) & handles.num_spikes ~= 0
+elseif isempty(FIRA) && handles.num_spikes ~= 0
     set(handles.spikemenu, 'String', {'no spikes'});
     handles.num_spikes = 0;
 end
@@ -198,9 +198,9 @@ num_rast = num_axes*get(handles.rasterrb, 'Value');
 num_psth = num_axes*get(handles.psthrb,   'Value');
 
 % check if anything changed
-if num_rast ~= length(handles.rasteraxes)          | ...
-        num_psth ~= length(handles.psthaxes)       | ...
-        length(uniques) ~= length(handles.uniques) | ...
+if num_rast ~= length(handles.rasteraxes)          || ...
+        num_psth ~= length(handles.psthaxes)       || ...
+        length(uniques) ~= length(handles.uniques) || ...
         any(uniques ~= handles.uniques)
 
     % set to current figure
@@ -222,7 +222,7 @@ if num_rast ~= length(handles.rasteraxes)          | ...
         %   3. marker at rate off
         %   4. m1 (optional, from gui)
         %   5. m2 (optional, from gui)
-        handles.rasterhs   = zeros(num_rast, 5); % data + line at
+        handles.rasterhs   = zeros(num_rast, 7); % data + line at
     end
 
     if ~isempty(handles.psthaxes)
@@ -238,7 +238,7 @@ if num_rast ~= length(handles.rasteraxes)          | ...
     % plot params
     ctr_x = .55;
     ctr_y = .38;
-    if num_rast & num_psth
+    if num_rast && num_psth
         sz = [.26 .36 .18 0.125 0.125];
     else
         sz = [.26 .36 .18 0.25  0];
@@ -256,6 +256,8 @@ if num_rast ~= length(handles.rasteraxes)          | ...
             handles.rasterhs(i, 3) = plot(0, 0, 'r^', 'MarkerFaceColor', 'r', 'MarkerSize', 2)';
             handles.rasterhs(i, 4) = plot(0, 0, 'g^', 'MarkerFaceColor', 'g', 'MarkerSize', 2)';
             handles.rasterhs(i, 5) = plot(0, 0, 'b^', 'MarkerFaceColor', 'b', 'MarkerSize', 2)';
+            handles.rasterhs(i, 6) = plot(0, 0, 'c^', 'MarkerFaceColor', 'c', 'MarkerSize', 2)';
+            handles.rasterhs(i, 7) = plot(0, 0, 'm^', 'MarkerFaceColor', 'm', 'MarkerSize', 2)';
             set(handles.rasteraxes(i), 'XTickLabel', [], 'XTick', [], ...
                 'YTickLabel', [], 'YTick', []);
         end
@@ -292,7 +294,7 @@ stats = plotFIRA_rasterPSTH(trials, Lsb, ...
     gsGUI_ecodeTimesByName('get', handles.m1menu,        handles.m1edit,        trials), ...
     gsGUI_ecodeTimesByName('get', handles.m2menu,        handles.m2edit,        trials), ...
     ], ...
-    get(handles.binsizemenu, 'Value'), get(handles.smenu, 'Value'), ...
+    get(handles.binsizemenu, 'Value')*5, get(handles.smenu, 'Value'), ...
     handles.rasteraxes, handles.rasterhs, handles.psthaxes, handles.psthhs);
 
 % plot the polar data (being sure to "close the loop")
@@ -306,7 +308,7 @@ set(h, 'LineWidth', 2, 'MarkerFaceColor', 'r');
 
 % compute the fit from Jeff's magical program
 stats = stats(~isnan(stats(:,1)), :);
-if length(uniques) > 2 & sum(stats(:,1))
+if length(uniques) > 2 && sum(stats(:,1))
     [th, width, s] = getTuning(pi/180*uniques, stats(:,1), stats(:,2), stats(:,5), 'VonMises');
     set(handles.vmtext, 'String', ...
         sprintf('vMis: m=%.0f s=%.0f p=%.2f', 180/pi*th, 180/pi*width, s(3)));

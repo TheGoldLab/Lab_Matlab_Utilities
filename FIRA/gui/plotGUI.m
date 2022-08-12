@@ -165,7 +165,7 @@ else
       set(handles.text1, 'String', ...
          sprintf('Status: file (unnamed), %d trials', size(FIRA.ecodes.data,1)));
    else
-      [pathstr, name, ext, versn] = fileparts(FIRA.header.filename{1});
+      [~, name, ~] = fileparts(FIRA.header.filename{1});
       set(handles.text1, 'String', ...
          sprintf('Status: file <%s>, %d trials', name, size(FIRA.ecodes.data,1)));
    end
