@@ -135,7 +135,7 @@ for ii = 1:numel(lines)
         case 'True'
             params.(key) = true;
         case 'False'
-            params.(key) = true;
+            params.(key) = false;
         otherwise
             try
                 params.(key) = eval(rawSplits{2});
