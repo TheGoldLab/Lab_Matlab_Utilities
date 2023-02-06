@@ -84,7 +84,7 @@ for ii = 1:numel(npyFiles)
     npyFile = npyFiles(ii);
     data = readNPY(fullfile(npyFile.folder, npyFile.name));
     [~, fieldName] = fileparts(npyFile.name);
-    phy.(fieldName) = data;
+    phy.(genvarname(fieldName)) = data;
 end
 
 tsvFiles = dir(fullfile(phyDir, '*.tsv'));
@@ -92,7 +92,7 @@ for ii = 1:numel(tsvFiles)
     tsvFile = tsvFiles(ii);
     data = readtable(fullfile(tsvFile.folder, tsvFile.name), 'FileType', 'delimitedtext');
     [~, fieldName] = fileparts(tsvFile.name);
-    phy.(fieldName) = data;
+    phy.(genvarname(fieldName)) = data;
 end
 
 
@@ -129,7 +129,7 @@ lines = readlines(paramsFile, 'EmptyLineRule', 'skip');
 for ii = 1:numel(lines)
     line = lines{ii};
     rawSplits = split(line, '=');
-    key = strip(rawSplits{1});
+    key = genvarname(strip(rawSplits{1}));
     value = strip(rawSplits{2});
     switch value
         case 'True'
