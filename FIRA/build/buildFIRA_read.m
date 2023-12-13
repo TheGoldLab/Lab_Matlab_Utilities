@@ -56,6 +56,7 @@ readers = {...
     @readPLX_plxFile    'plexon'      {'.plx'};     ... % PLEXON FILES
     @readTDL_logFile    'topsFile'    {'.mat'};     ... % TOPS DATA LOG FILE
     @readPLX_naoFile    'nao'         {'.nao'};     ... % NEX (Neural EXplorer) FILES converted from Alpha-Omega files
+    @readPHY_files      'phy'         {'.py'};      ... % PHY (Spike Sorting Curator) folder containing params.py
 };
 
 % To decide which "reader" to use on the data file(s):
