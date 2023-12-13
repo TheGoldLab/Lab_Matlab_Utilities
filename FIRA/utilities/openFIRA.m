@@ -53,12 +53,12 @@ if nargin > 2 && ~isempty(exclude_list)
 end
 
 
-% TEMPORARY!!!!
-FIRA.ecodes.type = cat(2, FIRA.ecodes.type, {'time', 'time'});
-FIRA.ecodes.name = cat(2, FIRA.ecodes.name, {'stim_sac' 'vol_sac'});
-
-FIRA.ecodes.data(:,end+1) = FIRA.ecodes.data(:,10)+...
-    FIRA.ecodes.data(:,35)+FIRA.ecodes.data(:,36)+5;
-
-FIRA.ecodes.data(:,end+1)   = FIRA.ecodes.data(:,10)+...
-    FIRA.ecodes.data(:,29)+FIRA.ecodes.data(:,30)+5;
+% % TEMPORARY!!!!
+% FIRA.ecodes.type = cat(2, FIRA.ecodes.type, {'time', 'time'});
+% FIRA.ecodes.name = cat(2, FIRA.ecodes.name, {'stim_sac' 'vol_sac'});
+% 
+% FIRA.ecodes.data(:,end+1) = FIRA.ecodes.data(:,10)+...
+%     FIRA.ecodes.data(:,35)+FIRA.ecodes.data(:,36)+5;
+% 
+% FIRA.ecodes.data(:,end+1)   = FIRA.ecodes.data(:,10)+...
+%     FIRA.ecodes.data(:,29)+FIRA.ecodes.data(:,30)+5;

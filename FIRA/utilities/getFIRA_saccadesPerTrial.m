@@ -114,6 +114,19 @@ if isfield(FIRA, 'analog')
                 FIRA.analog.data(trial, eyeX).values(fpoff_samp:end_ind), ...
                 FIRA.analog.data(trial, eyeY).values(fpoff_samp:end_ind), ...
                 FIRA.analog.store_rate(1), options.num_saccades, false);
+
+            %             cla reset; hold on;
+            %             xvals = FIRA.analog.data(trial, eyeX).values;
+            %             yvals = FIRA.analog.data(trial, eyeY).values;
+            %             tax = cumsum(ones(size(xvals)))-fpoff_samp;
+            %             plot(tax, xvals, 'r-')
+            %             plot(tax, yvals, 'b-')
+            %             plot([0 0], [-30 30], 'k--')
+            %             axis([-2500 2500 -30 30])
+            %             title(sprintf('fp off = %.2f, length=%d', ...
+            %                 FIRA.ecodes.data(trial, strcmp(options.fpoff, FIRA.ecodes.name)), ...
+            %                 length(xvals)))
+            %             r = input('next')
         end        
     end
 end

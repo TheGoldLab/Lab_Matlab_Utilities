@@ -78,4 +78,3 @@ if isfield(FIRA.raw.analog.params, 'rezero_array') && ...
         end
     end
 end
-
