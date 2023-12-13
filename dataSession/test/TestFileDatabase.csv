@@ -1,0 +1,7 @@
+filename,sortType,converter,convertSpecs,matlabFormat,notes
+MM_2023_09_06D_Rec_V-ProRec_Sorted-04,Sorted,Pyramid,AODR_experiment.yaml,dataSession,extra
+MM_2023_08_17_Rec_V-ProRec_Sorted-01,Sorted,,AODR_experiment.yaml,dataSession,
+MM_2023_08_23D_Rec_V-ProRec_Sorted-01,Sorted,Pyramid,AODR_experiment.yaml,dataSession,
+MM_2023_08_25B_Rec_V-ProRec_Sorted-01,Sorted,Pyramid,AODR_experiment.yaml,dataSession,
+MM_2023_08_29_Rec_V-ProRec_sub_Sorted-01,Sorted,FIRA,spmAODR,dataSession,
+MM_2023_08_31C_Rec_V-ProRec_sub_Sorted-02,Sorted,Pyramid,AODR_experiment.yaml,dataSession,

@@ -1,0 +1,137 @@
+experiment:
+  # Basic info suitable for inclusion in an NWB file.
+  experimenter:
+    - Zweigle, Jean
+    - Thompson, Lowell
+    - Subritzky-Katz, Victoria
+  experiment_description: Adaptive ODR ("ADPODR")
+  institution: University of Pennsylvania
+  lab: The Gold Lab
+  keywords:
+    - dlPFC
+readers:
+  # How to get data, from where, and how to get it into buffers that trials can pick from.
+  plexon_reader:
+    class: pyramid.neutral_zone.readers.plexon.PlexonPlxReader
+    args:
+      # Override plx_file on cli with: --readers plexon_reader.plx_file=my_real_file.plx
+      plx_file: my_file.plx
+      spikes: all
+      events:
+        Strobed: ecodes
+      signals:
+        X50: gaze_x
+        Y51: gaze_y
+    # For gui demo, wait between trial delimiting events.
+    simulate_delay: True
+    extra_buffers:
+      # Use ecodes as the delimiter for trials in time.
+      delimiter:
+        reader_result_name: ecodes
+      # Scale up the gaze signals by a known gain.
+      gaze_x:
+        reader_result_name: gaze_x
+        transformers:
+          - class: pyramid.neutral_zone.transformers.standard_transformers.OffsetThenGain
+            args:
+              gain: 10.2
+      gaze_y:
+        reader_result_name: gaze_y
+        transformers:
+          - class: pyramid.neutral_zone.transformers.standard_transformers.OffsetThenGain
+            args:
+              gain: 10.2
+trials:
+  start_buffer: delimiter
+  start_value: 1005
+  wrt_buffer: delimiter
+  wrt_value: 1010
+  # Add named values to each trial, after event and signal data have been automatically added.
+  adjusters:
+    - class: pyramid.trials.standard_adjusters.SignalSmoother
+      args:
+        buffer_name: gaze_x
+        type: Gaussian
+        args: 5
+    - class: pyramid.trials.standard_adjusters.SignalSmoother
+      args:
+        buffer_name: gaze_y
+        type: Gaussian
+        args: 5
+  enhancers:
+      # Standard enchancers come along with the Pyramid code.
+    - class: pyramid.trials.standard_enhancers.PairedCodesEnhancer
+      args:
+        buffer_name: ecodes
+        rules_csv: [default_ecode_rules.csv, AODR_ecode_rules.csv]
+      # Standard enchancers come along with the Pyramid code.
+    - class: pyramid.trials.standard_enhancers.EventTimesEnhancer
+      args:
+        buffer_name: ecodes
+        rules_csv: [default_ecode_rules.csv, AODR_ecode_rules.csv]
+      # Standard enchancers come along with the Pyramid code.
+    - class: pyramid.trials.standard_enhancers.ExpressionEnhancer
+      args:
+        expression: task_id > 0
+        value_name: actual_task
+      # Custom enchancers can be located in any specified "package path", eg the current folder.
+    - class: pyramid.trials.standard_enhancers.SaccadesEnhancer
+      when: actual_task and len(fp_off) > 0
+      args:
+        min_length_deg: 3
+        velocity_threshold_deg_per_s: 300
+        acceleration_threshold_deg_per_s2: 6
+        debug_plot: False
+        debug_plot_pause_s: 1.0
+    - class: AODR_custom_enhancers.CustomEnhancer
+      package_path: .
+      when: actual_task
+      args:
+        min_angular_distance_to_target_deg: 30
+plotters:
+    # Plot basic info about conversion process, plus a "Quit" button.
+  - class: pyramid.plotters.standard_plotters.BasicInfoPlotter
+    # Plot gaze signal data.
+  - class: pyramid.plotters.standard_plotters.SignalChunksPlotter
+    args:
+      xmin: -1.0
+      xmax: 5.0
+      ylabel: 10x raw signal
+    # Plot raw, numeric ecode data.
+  - class: pyramid.plotters.standard_plotters.NumericEventsPlotter
+    args:
+      xmin: -1.0
+      xmax: 5.0
+      match_pattern: ecodes
+    # Plot spike data with channels and units on the y-axis.
+  - class: pyramid.plotters.standard_plotters.SpikeEventsPlotter
+    args:
+      xmin: -1.0
+      xmax: 5.0
+      match_pattern: spike_.*
+      value_index: 1
+      value_selection: 1
+      marker: "|"
+    # Plot time(s) of key events during each trial (enhancements in the "time" category).
+  - class: pyramid.plotters.standard_plotters.EnhancementTimesPlotter
+    args:
+      xmin: -1.0
+      xmax: 5.0
+    # Plot XY value pairs from each trial (enhancements in the "value" category).
+  - class: pyramid.plotters.standard_plotters.EnhancementXYPlotter
+    args:
+      xmin: -20
+      xmax: 20
+      ymin: -15
+      ymax: 15
+      # These XY pairs are plotted as separate points.
+      xy_points:
+        fp_x: fp_y
+        t1_x: t1_y
+        t2_x: t2_y
+        sample_x: sample_y
+      # These XY pairs are grouped together and plotted as lines.
+      xy_groups:
+        scored_saccade:
+          x_start: y_start
+          x_end: y_end
