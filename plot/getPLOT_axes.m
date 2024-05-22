@@ -12,7 +12,11 @@ function [axs_,fig_,cap_] = getPLOT_axes(num, wid, hts, cols, psh, psw, fs, al, 
 
 % Figure number
 if nargin < 1 || isempty(num)
-    num = 1;
+    FigureNumber = 'Figure xx';
+elseif isscalar (num)
+    FigureNumber = ['Figure ' num2str(num)];
+elseif ischar(num)
+    FigureNumber = ['Figure ' num];
 end
 
 % total width -- default 1.5 columns
@@ -61,18 +65,14 @@ pos = get(fig_, 'Position');
 % h=[text(0,1,al), text(0,0,sprintf('Figure %d',num))];
 % set(h,'FontSize',14);
 if nargin >= 8 && ~isempty(al)
-    if num > 0
-        h=[text(0.7,0.93,al), text(0.7,0.91,sprintf('Figure %d',num))];
-    else
-        h=text(0.7,0.93,al);
-    end
+    h=[text(0.7,0.93,al), text(0.7,0.91,FigureNumber)];
     set(h,'FontSize',14);
     set(gca,'Visible', 'off')
 end
 
 % add possible caption
 if nargin > 8 && ~isempty(cap)
-    cap_ = text(0.1,0.1,sprintf('Figure %d:', num));
+    cap_ = text(0.1,0.1,FigureNumber);
 end
 
 % useful variables
