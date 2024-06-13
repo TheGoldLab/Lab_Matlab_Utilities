@@ -1,11 +1,15 @@
-function dataInFIRAFormat = convertTrialFileToFIRA(dataInTrialFileFormat, filename)
-% function dataInFIRAFormat = convertTrialFileToFIRA(dataInTrialFileFormat, filename)
+function dataInFIRAFormat = convertTrialFileToFIRA(dataInTrialFileFormat, filename, spikeCategories)
+% function dataInFIRAFormat = convertTrialFileToFIRA(dataInTrialFileFormat)
 %
 % Convert trialFile to FIRA
 %
 
-if nargin < 2 || isempty('filename')
+if nargin < 2 || isempty(filename)
     filename = 'Converted from trialFile';
+end
+
+if nargin < 3 || isempty(spikeCategories)
+    spikeCategories = {'spikes'};
 end
 
 % Get numTrials -- remember first and last are dummies
@@ -51,7 +55,7 @@ if numTrials < 1
     return
 end
 
-%% Add ecodes
+%% Add ecodes from trial enhancements.
 %
 % Start with four "standard" fields
 dataInFIRAFormat.ecodes.name = {'trial_num', 'trial_begin', 'trial_end', 'trial_wrt'};
@@ -62,71 +66,161 @@ dataInFIRAFormat.ecodes.data(:,2) = [dataInTrialFileFormat(2:end-1).start_time]'
 dataInFIRAFormat.ecodes.data(:,3) = [dataInTrialFileFormat(2:end-1).end_time]';
 dataInFIRAFormat.ecodes.data(:,4) = [dataInTrialFileFormat(2:end-1).wrt_time]';
 
-% Now add all the "enhancements", by category.
+% Use trial "categories" to indicate which trial fields,
+% including events and enhancements, contain ecodes.
+% Categories have names like "id", "value", and "time".
+% Event and enhancement fields have names like "fp_on", and "t1_angle".
+
 % Loop through the trials
 for tt = 1:numTrials
 
-    % Loop through the enhancement categories present in each trial
-    categories = fieldnames(dataInTrialFileFormat(tt+1).enhancement_categories);
-    for cc = 1:length(categories)
+    % Loop through the categories present in each trial.
+    categories = dataInTrialFileFormat(tt+1).categories;
+    if ~isempty(categories)
 
-        % Get list of enhancements of this type
-        enhancements = dataInTrialFileFormat(tt+1).enhancement_categories.(categories{cc});
-        numEnhancements = length(enhancements);
-            
-        % Loop through the enhancements
-        for ee = 1:numEnhancements
-            value = dataInTrialFileFormat(tt+1).enhancements.(enhancements{ee});
-            if isstruct(value)
+        % Treat categories that aren't for spikes as ecodes.
+        ecodeCategoryNames = setdiff(fieldnames(categories), spikeCategories);
+        for cc = 1:length(ecodeCategoryNames)
 
-                % Loop through 
-                doubleSecretEnhancements = fieldnames(value);
-                numDoubleSecretEnhancements = length(doubleSecretEnhancements);
+            % Get names of trial enhancements in this category.
+            categoryName = ecodeCategoryNames{cc};
+            fieldsInCategory = categories.(categoryName );
+            enhancements = dataInTrialFileFormat(tt+1).enhancements;
+            enhancementNames = {};
+            if ~isempty(enhancements)
+                enhancementNames = fieldnames(enhancements);
+            end
+            enhancementsInCategory = intersect(fieldsInCategory, enhancementNames);
+            numEnhancements = length(enhancementsInCategory);
 
-                for dd = 1:numDoubleSecretEnhancements
+            % Loop through the enhancements in this category.
+            for ee = 1:numEnhancements
+                enhancementName = enhancementsInCategory{ee};
+                value = dataInTrialFileFormat(tt+1).enhancements.(enhancementName);
+                if isstruct(value)
+
+                    % Loop through
+                    doubleSecretEnhancements = fieldnames(value);
+                    numDoubleSecretEnhancements = length(doubleSecretEnhancements);
+
+                    for dd = 1:numDoubleSecretEnhancements
+
+                        % Save the name/type (always "value", just cuz)
+                        name = [enhancementName '_' doubleSecretEnhancements{dd}];
+                        Lcolumn = strcmp(name, dataInFIRAFormat.ecodes.name);
+                        if ~any(Lcolumn)
+                            dataInFIRAFormat.ecodes.name(end+1) = {name};
+                            dataInFIRAFormat.ecodes.type(end+1) = {'value'};
+                            dataInFIRAFormat.ecodes.data(:,end+1) = nan;
+                            Lcolumn(end+1) = true;
+                        end
+
+                        % Save the data
+                        value = dataInTrialFileFormat(tt+1).enhancements.(enhancementName).(doubleSecretEnhancements{dd});
+                        if isempty(value)
+                            value = nan;
+                        elseif length(value) > 1
+                            fprintf('Warning: found >1 values for %s at trial file index %d, FIRA index %d\n', name, tt+1, tt)
+                            value = value(1);
+                        end
+                        dataInFIRAFormat.ecodes.data(tt,Lcolumn) = value;
+                    end
+
+                else
 
                     % Save the name/type (always "value", just cuz)
-                    name = [enhancements{ee} '_' doubleSecretEnhancements{dd}];
-                    Lcolumn = strcmp(name, dataInFIRAFormat.ecodes.name);
+                    Lcolumn = strcmp(enhancementName, dataInFIRAFormat.ecodes.name);
                     if ~any(Lcolumn)
-                        dataInFIRAFormat.ecodes.name(end+1) = {name};
-                        dataInFIRAFormat.ecodes.type(end+1) = {'value'};
+                        dataInFIRAFormat.ecodes.name{end+1} = enhancementName;
+                        dataInFIRAFormat.ecodes.type{end+1} = categoryName;
                         dataInFIRAFormat.ecodes.data(:,end+1) = nan;
                         Lcolumn(end+1) = true;
                     end
 
                     % Save the data
-                    value = dataInTrialFileFormat(tt+1).enhancements.(enhancements{ee}).(doubleSecretEnhancements{dd});
                     if isempty(value)
                         value = nan;
                     elseif length(value) > 1
-                        fprintf('Warning: found >1 values for %s on trial %d\n', ...
-                            name, tt+1)
+                        fprintf('Warning: found >1 values for %s at trial file index %d, FIRA index %d\n', enhancementName, tt+1, tt)
                         value = value(1);
                     end
                     dataInFIRAFormat.ecodes.data(tt,Lcolumn) = value;
                 end
+            end
 
-            else
+            % Get names of trial numeric event buffers in this category.
+            numeric = dataInTrialFileFormat(tt+1).numeric_events;
+            numericNames = {};
+            if ~isempty(numeric)
+                numericNames = fieldnames(numeric);
+            end
+            numericInCatecory = intersect(fieldsInCategory, numericNames);
+            numNumeric = length(numericInCatecory);
 
-                % Save the name/type (always "value", just cuz)
-                Lcolumn = strcmp(enhancements{ee}, dataInFIRAFormat.ecodes.name);
+            % Loop through the numeric events in this category.
+            for nn = 1:numNumeric
+                numericName = numericInCatecory{nn};
+                eventData = dataInTrialFileFormat(tt+1).numeric_events.(numericName);
+
+                if isempty(eventData)
+                    ecodeValue = nan;
+                else
+                    if size(eventData, 1) > 1
+                        fprintf('Warning: found >1 values for %s at trial file index %d, FIRA index %d\n', numericName, tt+1, tt)
+                    end
+                    % Each event can have multiple values, like:
+                    %   [timestamp]
+                    %   [timestamp, value]
+                    %   [timestamp, value1, value2, ...]
+                    % Take the last one available.
+                    ecodeValue = eventData(1,end);
+                end
+
+                % Create the new ecode and save the data.
+                Lcolumn = strcmp(numericName, dataInFIRAFormat.ecodes.name);
                 if ~any(Lcolumn)
-                    dataInFIRAFormat.ecodes.name(end+1) = enhancements(ee);
-                    dataInFIRAFormat.ecodes.type(end+1) = categories(cc);
+                    dataInFIRAFormat.ecodes.name{end+1} = numericName;
+                    dataInFIRAFormat.ecodes.type{end+1} = categoryName;
                     dataInFIRAFormat.ecodes.data(:,end+1) = nan;
                     Lcolumn(end+1) = true;
                 end
+                dataInFIRAFormat.ecodes.data(tt,Lcolumn) = ecodeValue;
+            end
 
-                % Save the data
-                if isempty(value)
-                    value = nan;
-                elseif length(value) > 1
-                    fprintf('Warning: found >1 values for %s on trial %d\n', ...
-                        enhancements{ee}, tt+1)
-                    value = value(1);
+            % Get names of trial text event buffers in this category.
+            text = dataInTrialFileFormat(tt+1).text_events;
+            textNames = {};
+            if ~isempty(text)
+                textNames = fieldnames(text);
+            end
+            textInCategory = intersect(fieldsInCategory, textNames);
+            numText = length(textInCategory);
+
+            % Loop through the text events in this category.
+            for tx = 1:numText
+                textName = textInCategory{tx};
+                eventData = dataInTrialFileFormat(tt+1).text_events.(textName);
+
+                if isempty(eventData)
+                    ecodeValue = nan;
+                else
+                    if size(eventData.timestamp_data, 1) > 1
+                        fprintf('Warning: found >1 values for %s at trial file index %d, FIRA index %d\n', textName, tt+1, tt)
+                    end
+                    % Text events have a timestamp and a text string.
+                    % Take the first timestamp.
+                    ecodeValue = eventData.timestamp_data(1);
                 end
-                dataInFIRAFormat.ecodes.data(tt,Lcolumn) = value;
+
+                % Create the new ecode and save the data.
+                Lcolumn = strcmp(textName, dataInFIRAFormat.ecodes.name);
+                if ~any(Lcolumn)
+                    dataInFIRAFormat.ecodes.name{end+1} = textName;
+                    dataInFIRAFormat.ecodes.type{end+1} = categoryName;
+                    dataInFIRAFormat.ecodes.data(:,end+1) = nan;
+                    Lcolumn(end+1) = true;
+                end
+                dataInFIRAFormat.ecodes.data(tt,Lcolumn) = ecodeValue;
             end
         end
     end
@@ -166,28 +260,48 @@ for ss = 1:numSignals
     end
 end
 
-%% Add spikes
+%% Add spikes from trial numeric events.
 %
-spikeChannelNames = setdiff(fieldnames(dataInTrialFileFormat(2).numeric_events), {'ecodes'});
-numSpikeChannels = length(spikeChannelNames);
 
 % Start the data celery
+% Mmmm, celery...
 dataInFIRAFormat.spikes.data = {};
 
-% Loop through the channels to count units
-for ss = 2:numSpikeChannels
+% Loops through the trials and collect the data
+for tt = 1:numTrials
 
-    % Parse channel number
-    channelNumber = str2double(spikeChannelNames{ss}(end-2:end));
+    % Get spikes from trial numeric event lists.
+    numeric = dataInTrialFileFormat(tt+1).numeric_events;
+    numericNames = {};
+    if ~isempty(numeric)
+        numericNames = fieldnames(numeric);
+    end
 
-    % Keep track of units
-    channelUnits = [];
+    % But only the numeric event lists that are in spike categories.
+    spikeNames = {};
+    categories = dataInTrialFileFormat(tt+1).categories;
+    if ~isempty(categories)
+        for sc = 1:length(spikeCategories)
+            spikeCategory = spikeCategories{sc};
+            if isfield(categories, spikeCategory)
+                spikeNames = cat(1, spikeNames, categories.(spikeCategory));
+            end
+        end
+    end
+    spikeChannelNames = intersect(numericNames, spikeNames);
 
-    % Keep track of where we're storing the data
-    channelRowStart = 0;
+    % Loop through the channels to count units
+    numSpikeChannels = length(spikeChannelNames);
+    for ss = 1:numSpikeChannels
 
-    % Loops through the trials and collect the data
-    for tt = 1:numTrials
+        % Parse channel number
+        channelNumber = str2double(spikeChannelNames{ss}(end-2:end));
+
+        % Keep track of units
+        channelUnits = [];
+
+        % Keep track of where we're storing the data
+        channelRowStart = 0;
 
         % Get the data
         trialSpikes = dataInTrialFileFormat(tt+1).numeric_events.(spikeChannelNames{ss});
